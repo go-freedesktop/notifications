@@ -34,10 +34,11 @@ type Handler interface {
 // connection and forwards decoded requests to a Handler. It is safe for
 // concurrent use: the id allocator is mutex-guarded.
 //
-// The two fallible connection operations Export performs -- exporting the
-// method object and claiming the well-known name -- are indirected through
-// function fields (exportFn, requestNameFn) so tests can inject failures and
-// cover every error branch without a live bus.
+// The three fallible D-Bus operations the server performs -- exporting the
+// method object, claiming the well-known name, and emitting a signal -- are
+// indirected through function fields (exportFn, requestNameFn, emitFn) so the
+// method handlers can be unit-tested as plain Go calls, with injected fakes
+// covering every branch, without ever bringing up a bus or a connection.
 type Server struct {
 	conn    *dbus.Conn
 	handler Handler
@@ -47,6 +48,7 @@ type Server struct {
 
 	exportFn      func(v interface{}, path dbus.ObjectPath, iface string) error
 	requestNameFn func(name string, flags dbus.RequestNameFlags) (dbus.RequestNameReply, error)
+	emitFn        func(path dbus.ObjectPath, name string, values ...interface{}) error
 }
 
 // NewServer returns a Server that will export the notification service on conn
@@ -57,6 +59,7 @@ func NewServer(conn *dbus.Conn, h Handler) *Server {
 		handler:       h,
 		exportFn:      conn.Export,
 		requestNameFn: conn.RequestName,
+		emitFn:        conn.Emit,
 	}
 }
 
@@ -83,13 +86,13 @@ func (s *Server) Export() error {
 
 // EmitClosed emits the NotificationClosed signal for id with the given reason.
 func (s *Server) EmitClosed(id uint32, reason CloseReason) error {
-	return s.conn.Emit(dbus.ObjectPath(ObjectPath), Interface+"."+SignalNotificationClosed,
+	return s.emitFn(dbus.ObjectPath(ObjectPath), Interface+"."+SignalNotificationClosed,
 		id, uint32(reason))
 }
 
 // EmitActionInvoked emits the ActionInvoked signal binding action key to id.
 func (s *Server) EmitActionInvoked(id uint32, key string) error {
-	return s.conn.Emit(dbus.ObjectPath(ObjectPath), Interface+"."+SignalActionInvoked,
+	return s.emitFn(dbus.ObjectPath(ObjectPath), Interface+"."+SignalActionInvoked,
 		id, key)
 }
 

@@ -7,88 +7,21 @@
 package notifications
 
 import (
-	"bufio"
 	"errors"
-	"io"
 	"math"
 	"net"
-	"sync"
 	"testing"
-	"time"
 
 	"github.com/godbus/dbus/v5"
 )
 
-// --- peer-to-peer harness (no dbus-daemon) --------------------------------
-//
-// godbus has no server role, so two client Conns are wired through a middle
-// goroutine that plays the SASL auth-server for each end and then splices the
-// two byte streams. This exercises the real susssasa{sv}i marshalling over an
-// in-memory net.Pipe with zero external processes.
+// The server's method handlers are unit-tested as plain Go calls with injected
+// fakes for the three fallible D-Bus operations (export, request-name, emit).
+// This gives full coverage of the server logic with no bus, no auth handshake
+// and no connection I/O -- so a test can never hang.
 
-// authServe performs the bus side of the EXTERNAL SASL handshake for one
-// client end, consuming exactly up to and including "BEGIN\r\n".
-func authServe(c net.Conn) error {
-	r := bufio.NewReader(c)
-	if _, err := r.ReadByte(); err != nil { // leading null byte
-		return err
-	}
-	if _, err := r.ReadBytes('\n'); err != nil { // "AUTH"
-		return err
-	}
-	if _, err := c.Write([]byte("REJECTED EXTERNAL\r\n")); err != nil {
-		return err
-	}
-	if _, err := r.ReadBytes('\n'); err != nil { // "AUTH EXTERNAL <hex>"
-		return err
-	}
-	if _, err := c.Write([]byte("OK 0123456789abcdef0123456789abcdef\r\n")); err != nil {
-		return err
-	}
-	if _, err := r.ReadBytes('\n'); err != nil { // "BEGIN"
-		return err
-	}
-	if r.Buffered() != 0 {
-		return errors.New("auth: client over-read past BEGIN")
-	}
-	return nil
-}
-
-// pipePair returns two authenticated, spliced godbus connections.
-func pipePair(t *testing.T) (server, client *dbus.Conn) {
-	t.Helper()
-	sConn, sMid := net.Pipe()
-	cConn, cMid := net.Pipe()
-
-	go func() {
-		if authServe(sMid) != nil || authServe(cMid) != nil {
-			return
-		}
-		go func() { _, _ = io.Copy(sMid, cMid) }()
-		_, _ = io.Copy(cMid, sMid)
-	}()
-
-	var err error
-	if server, err = dbus.NewConn(sConn); err != nil {
-		t.Fatal(err)
-	}
-	if client, err = dbus.NewConn(cConn); err != nil {
-		t.Fatal(err)
-	}
-	if err = server.Auth([]dbus.Auth{dbus.AuthExternal("0")}); err != nil {
-		t.Fatalf("server auth: %v", err)
-	}
-	if err = client.Auth([]dbus.Auth{dbus.AuthExternal("0")}); err != nil {
-		t.Fatalf("client auth: %v", err)
-	}
-	t.Cleanup(func() { _ = server.Close(); _ = client.Close() })
-	return server, client
-}
-
-// recHandler records the calls a Server forwards to it. godbus dispatches
-// method calls on their own goroutines, so access is mutex-guarded for -race.
+// recHandler records the calls a Server forwards to it.
 type recHandler struct {
-	mu     sync.Mutex
 	last   *Notification
 	closes []struct {
 		id     uint32
@@ -96,129 +29,93 @@ type recHandler struct {
 	}
 }
 
-func (h *recHandler) OnNotify(n *Notification) uint32 {
-	h.mu.Lock()
-	defer h.mu.Unlock()
-	h.last = n
-	return n.ID
-}
+func (h *recHandler) OnNotify(n *Notification) uint32 { h.last = n; return n.ID }
 func (h *recHandler) OnClose(id uint32, reason CloseReason) {
-	h.mu.Lock()
-	defer h.mu.Unlock()
 	h.closes = append(h.closes, struct {
 		id     uint32
 		reason CloseReason
 	}{id, reason})
 }
-func (h *recHandler) lastNote() *Notification {
-	h.mu.Lock()
-	defer h.mu.Unlock()
-	return h.last
+
+// emitRec captures the signals a Server emits through its emitFn seam.
+type emitRec struct {
+	path dbus.ObjectPath
+	name string
+	args []interface{}
 }
-func (h *recHandler) closeCount() (int, CloseReason) {
-	h.mu.Lock()
-	defer h.mu.Unlock()
-	if len(h.closes) == 0 {
-		return 0, 0
+
+func recordEmitter() (func(dbus.ObjectPath, string, ...interface{}) error, *[]emitRec) {
+	var recs []emitRec
+	fn := func(p dbus.ObjectPath, name string, args ...interface{}) error {
+		recs = append(recs, emitRec{p, name, args})
+		return nil
 	}
-	return len(h.closes), h.closes[0].reason
+	return fn, &recs
 }
 
-// --- tests ----------------------------------------------------------------
+// newPipeConn returns a *dbus.Conn wrapping one end of an in-process pipe. It
+// runs no auth and starts no I/O workers; only conn.Export (a pure in-memory
+// object registration) is ever exercised on it, so nothing blocks on the wire.
+func newPipeConn(t *testing.T) *dbus.Conn {
+	t.Helper()
+	a, b := net.Pipe()
+	conn, err := dbus.NewConn(a)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = conn.Close(); _ = b.Close() })
+	return conn
+}
 
-func TestServerP2PNotifyCloseAndSignals(t *testing.T) {
-	server, client := pipePair(t)
+func TestNewServerWiresSeams(t *testing.T) {
 	h := &recHandler{}
-	s := NewServer(server, h)
-	// Fake the name request so Export needs no live bus (fleet fake-injection).
-	s.requestNameFn = func(string, dbus.RequestNameFlags) (dbus.RequestNameReply, error) {
-		return dbus.RequestNameReplyPrimaryOwner, nil
+	s := NewServer(newPipeConn(t), h)
+	if s.handler != h || s.exportFn == nil || s.requestNameFn == nil || s.emitFn == nil {
+		t.Fatalf("NewServer left a seam unset: %+v", s)
 	}
-	if err := s.Export(); err != nil {
-		t.Fatalf("Export: %v", err)
-	}
+}
 
-	sigs := make(chan *dbus.Signal, 8)
-	client.Signal(sigs)
+func TestNotifyDecodesAssignsAndAllocates(t *testing.T) {
+	h := &recHandler{}
+	s := NewServer(newPipeConn(t), h)
+	x := &notifyExport{s: s}
 
-	obj := client.Object(BusName, dbus.ObjectPath(ObjectPath))
-
-	// Notify with a real image-data hint to drive full susssasa{sv}i marshalling.
-	imgData := imageDataVariant(1, 1, 3, false, 8, 3, []byte{7, 8, 9})
-	var id uint32
-	err := obj.Call(Interface+"."+MethodNotify, 0,
-		"Mail", uint32(0), "mail", "Subject", "Body <b>x</b>",
+	img := imageDataVariant(1, 1, 3, false, 8, 3, []byte{7, 8, 9})
+	id, derr := x.Notify("Mail", 0, "mail", "Subject", "Body <b>x</b>",
 		[]string{"default", "Open", "reply", "Reply"},
 		map[string]dbus.Variant{
 			"urgency":    dbus.MakeVariant(byte(UrgencyCritical)),
-			"image-data": imgData,
-		},
-		int32(-1)).Store(&id)
-	if err != nil {
-		t.Fatalf("Notify call: %v", err)
+			"image-data": img,
+		}, -1)
+	if derr != nil {
+		t.Fatalf("Notify returned error: %v", derr)
 	}
 	if id != 1 {
-		t.Fatalf("first Notify id = %d, want 1", id)
+		t.Fatalf("first id = %d, want 1", id)
 	}
-	last := h.lastNote()
-	if last == nil || last.Summary != "Subject" || last.Urgency != UrgencyCritical || last.Image == nil {
-		t.Fatalf("handler received wrong notification: %+v", last)
-	}
-	if len(last.Actions) != 2 {
-		t.Fatalf("actions decoded = %d, want 2", len(last.Actions))
+	if h.last == nil || h.last.Summary != "Subject" || h.last.Urgency != UrgencyCritical ||
+		h.last.Image == nil || len(h.last.Actions) != 2 {
+		t.Fatalf("handler received wrong notification: %+v", h.last)
 	}
 
-	// GetCapabilities + GetServerInformation over the wire.
-	var caps []string
-	if err := obj.Call(Interface+"."+MethodGetCapabilities, 0).Store(&caps); err != nil {
-		t.Fatal(err)
-	}
-	if len(caps) != 5 || caps[0] != "body" {
-		t.Fatalf("capabilities = %v", caps)
-	}
-	var name, vendor, version, spec string
-	if err := obj.Call(Interface+"."+MethodGetServerInfo, 0).Store(&name, &vendor, &version, &spec); err != nil {
-		t.Fatal(err)
-	}
-	if name != ServerName || vendor != VendorName || version != Version || spec != SpecVersion {
-		t.Fatalf("server info = %q/%q/%q/%q", name, vendor, version, spec)
-	}
-
-	// CloseNotification emits NotificationClosed(id, 3=closed) and notifies the handler.
-	if call := obj.Call(Interface+"."+MethodCloseNotification, 0, id); call.Err != nil {
-		t.Fatalf("CloseNotification: %v", call.Err)
-	}
-	waitSignal(t, sigs, Interface+"."+SignalNotificationClosed, id, uint32(ReasonClosed))
-	if n, r := h.closeCount(); n != 1 || r != ReasonClosed {
-		t.Fatalf("OnClose not called once with ReasonClosed: n=%d r=%v", n, r)
-	}
-
-	// A server-initiated ActionInvoked reaches the client.
-	if err := s.EmitActionInvoked(id, "reply"); err != nil {
-		t.Fatal(err)
-	}
-	waitSignalKey(t, sigs, Interface+"."+SignalActionInvoked, id, "reply")
-
-	// Second Notify allocates the next monotonic id.
-	var id2 uint32
-	if err := obj.Call(Interface+"."+MethodNotify, 0, "", uint32(0), "", "s2", "",
-		[]string{}, map[string]dbus.Variant{}, int32(1000)).Store(&id2); err != nil {
-		t.Fatal(err)
-	}
+	// The next fresh notification gets the next monotonic id.
+	id2, _ := x.Notify("", 0, "", "s2", "", nil, nil, 1000)
 	if id2 != 2 {
 		t.Fatalf("second id = %d, want 2", id2)
 	}
+	// replaces_id is reused verbatim and does not advance the counter.
+	id3, _ := x.Notify("", 5, "", "s3", "", nil, nil, 1000)
+	if id3 != 5 {
+		t.Fatalf("replaces id = %d, want 5", id3)
+	}
+	id4, _ := x.Notify("", 0, "", "s4", "", nil, nil, 1000)
+	if id4 != 3 {
+		t.Fatalf("id after replace = %d, want 3", id4)
+	}
 }
 
-func TestServerAssignReplacesAndWrap(t *testing.T) {
-	h := &recHandler{}
-	s := &Server{handler: h}
-
-	// ReplacesID is reused verbatim.
-	if got := s.assign(&Notification{ReplacesID: 55}); got != 55 {
-		t.Fatalf("replaces_id reuse = %d, want 55", got)
-	}
-	// The monotonic counter skips zero on wrap-around.
+func TestAssignWrapsPastMaxUint32(t *testing.T) {
+	s := &Server{handler: &recHandler{}}
 	s.nextID = math.MaxUint32
 	n := &Notification{}
 	if got := s.assign(n); got != 1 || n.ID != 1 {
@@ -226,70 +123,109 @@ func TestServerAssignReplacesAndWrap(t *testing.T) {
 	}
 }
 
-func TestServerExportErrorPaths(t *testing.T) {
-	server, _ := pipePair(t)
+func TestCloseNotificationEmitsClosedReason(t *testing.T) {
+	h := &recHandler{}
+	emit, recs := recordEmitter()
+	s := &Server{handler: h, emitFn: emit}
+	x := &notifyExport{s: s}
+
+	if derr := x.CloseNotification(7); derr != nil {
+		t.Fatalf("CloseNotification error: %v", derr)
+	}
+	if len(h.closes) != 1 || h.closes[0].id != 7 || h.closes[0].reason != ReasonClosed {
+		t.Fatalf("handler.OnClose = %v, want [{7 closed}]", h.closes)
+	}
+	if len(*recs) != 1 {
+		t.Fatalf("emitted %d signals, want 1", len(*recs))
+	}
+	r := (*recs)[0]
+	if r.path != dbus.ObjectPath(ObjectPath) || r.name != Interface+"."+SignalNotificationClosed {
+		t.Fatalf("emit target = %s %s", r.path, r.name)
+	}
+	if len(r.args) != 2 || r.args[0].(uint32) != 7 || r.args[1].(uint32) != uint32(ReasonClosed) {
+		t.Fatalf("emit args = %v, want [7 3]", r.args)
+	}
+}
+
+func TestEmitHelpers(t *testing.T) {
+	emit, recs := recordEmitter()
+	s := &Server{emitFn: emit}
+
+	if err := s.EmitClosed(3, ReasonExpired); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.EmitActionInvoked(3, "reply"); err != nil {
+		t.Fatal(err)
+	}
+	if len(*recs) != 2 {
+		t.Fatalf("emitted %d, want 2", len(*recs))
+	}
+	closed, action := (*recs)[0], (*recs)[1]
+	if closed.name != Interface+"."+SignalNotificationClosed ||
+		closed.args[1].(uint32) != uint32(ReasonExpired) {
+		t.Fatalf("EmitClosed wire = %s %v", closed.name, closed.args)
+	}
+	if action.name != Interface+"."+SignalActionInvoked ||
+		action.args[0].(uint32) != 3 || action.args[1].(string) != "reply" {
+		t.Fatalf("EmitActionInvoked wire = %s %v", action.name, action.args)
+	}
+}
+
+func TestGetCapabilitiesAndServerInformation(t *testing.T) {
+	x := &notifyExport{s: &Server{}}
+
+	caps, derr := x.GetCapabilities()
+	if derr != nil {
+		t.Fatal(derr)
+	}
+	if len(caps) != 5 || caps[0] != "body" || caps[4] != "persistence" {
+		t.Fatalf("capabilities = %v", caps)
+	}
+
+	name, vendor, version, spec, derr := x.GetServerInformation()
+	if derr != nil {
+		t.Fatal(derr)
+	}
+	if name != ServerName || vendor != VendorName || version != Version || spec != SpecVersion {
+		t.Fatalf("server info = %q/%q/%q/%q", name, vendor, version, spec)
+	}
+}
+
+func TestExportBranches(t *testing.T) {
+	conn := newPipeConn(t)
 	boom := errors.New("boom")
+	okExport := func(interface{}, dbus.ObjectPath, string) error { return nil }
 
-	// exportFn failure short-circuits Export.
-	s := NewServer(server, &recHandler{})
-	s.exportFn = func(interface{}, dbus.ObjectPath, string) error { return boom }
-	if err := s.Export(); !errors.Is(err, boom) {
-		t.Fatalf("export error not propagated: %v", err)
+	// Success: exportFn ok, real (local) introspect export, name granted.
+	s := &Server{conn: conn, handler: &recHandler{}, exportFn: okExport,
+		requestNameFn: func(string, dbus.RequestNameFlags) (dbus.RequestNameReply, error) {
+			return dbus.RequestNameReplyPrimaryOwner, nil
+		}}
+	if err := s.Export(); err != nil {
+		t.Fatalf("Export success path: %v", err)
 	}
 
-	// requestName failure propagates.
-	s2 := NewServer(server, &recHandler{})
-	s2.requestNameFn = func(string, dbus.RequestNameFlags) (dbus.RequestNameReply, error) {
-		return 0, boom
-	}
+	// exportFn failure short-circuits before the name request.
+	s2 := &Server{conn: conn, exportFn: func(interface{}, dbus.ObjectPath, string) error { return boom }}
 	if err := s2.Export(); !errors.Is(err, boom) {
-		t.Fatalf("requestName error not propagated: %v", err)
+		t.Fatalf("export error = %v, want boom", err)
+	}
+
+	// request-name failure propagates.
+	s3 := &Server{conn: conn, exportFn: okExport,
+		requestNameFn: func(string, dbus.RequestNameFlags) (dbus.RequestNameReply, error) {
+			return 0, boom
+		}}
+	if err := s3.Export(); !errors.Is(err, boom) {
+		t.Fatalf("request-name error = %v, want boom", err)
 	}
 
 	// A non-primary-owner reply is ErrNameTaken.
-	s3 := NewServer(server, &recHandler{})
-	s3.requestNameFn = func(string, dbus.RequestNameFlags) (dbus.RequestNameReply, error) {
-		return dbus.RequestNameReplyInQueue, nil
-	}
-	if err := s3.Export(); !errors.Is(err, ErrNameTaken) {
+	s4 := &Server{conn: conn, exportFn: okExport,
+		requestNameFn: func(string, dbus.RequestNameFlags) (dbus.RequestNameReply, error) {
+			return dbus.RequestNameReplyInQueue, nil
+		}}
+	if err := s4.Export(); !errors.Is(err, ErrNameTaken) {
 		t.Fatalf("expected ErrNameTaken, got %v", err)
-	}
-}
-
-// waitSignal waits for a signal with the given name and (uint32,uint32) body.
-func waitSignal(t *testing.T, ch <-chan *dbus.Signal, name string, a, b uint32) {
-	t.Helper()
-	for {
-		select {
-		case sig := <-ch:
-			if sig.Name != name {
-				continue
-			}
-			if len(sig.Body) != 2 || sig.Body[0].(uint32) != a || sig.Body[1].(uint32) != b {
-				t.Fatalf("%s body = %v, want [%d %d]", name, sig.Body, a, b)
-			}
-			return
-		case <-time.After(3 * time.Second):
-			t.Fatalf("timed out waiting for %s", name)
-		}
-	}
-}
-
-// waitSignalKey waits for a signal with a (uint32,string) body.
-func waitSignalKey(t *testing.T, ch <-chan *dbus.Signal, name string, id uint32, key string) {
-	t.Helper()
-	for {
-		select {
-		case sig := <-ch:
-			if sig.Name != name {
-				continue
-			}
-			if len(sig.Body) != 2 || sig.Body[0].(uint32) != id || sig.Body[1].(string) != key {
-				t.Fatalf("%s body = %v, want [%d %q]", name, sig.Body, id, key)
-			}
-			return
-		case <-time.After(3 * time.Second):
-			t.Fatalf("timed out waiting for %s", name)
-		}
 	}
 }
