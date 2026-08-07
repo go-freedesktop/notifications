@@ -13,12 +13,12 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/godbus/dbus/v5"
+	"github.com/go-freedesktop/dbus"
 )
 
 // imageDataVariant builds a variant carrying the (iiibiiay) image-data payload
-// exactly as godbus decodes it off the wire: a []interface{} of the seven
-// positional fields.
+// exactly as the D-Bus codec decodes it off the wire: a []interface{} of the
+// seven positional fields.
 func imageDataVariant(w, h, rowstride int32, hasAlpha bool, bps, channels int32, data []byte) dbus.Variant {
 	fields := []interface{}{w, h, rowstride, hasAlpha, bps, channels, data}
 	return dbus.MakeVariantWithSignature(fields, dbus.ParseSignatureMust("(iiibiiay)"))

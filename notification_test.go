@@ -8,7 +8,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/godbus/dbus/v5"
+	"github.com/go-freedesktop/dbus"
 )
 
 func TestCapabilities(t *testing.T) {

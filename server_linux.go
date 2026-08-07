@@ -10,8 +10,7 @@ import (
 	"errors"
 	"sync"
 
-	"github.com/godbus/dbus/v5"
-	"github.com/godbus/dbus/v5/introspect"
+	"github.com/go-freedesktop/dbus"
 )
 
 // ErrNameTaken is returned by Export when another process already owns the
@@ -47,7 +46,7 @@ type Server struct {
 	nextID uint32
 
 	exportFn      func(v interface{}, path dbus.ObjectPath, iface string) error
-	requestNameFn func(name string, flags dbus.RequestNameFlags) (dbus.RequestNameReply, error)
+	requestNameFn func(name string, flags uint32) (uint32, error)
 	emitFn        func(path dbus.ObjectPath, name string, values ...interface{}) error
 }
 
@@ -63,22 +62,22 @@ func NewServer(conn *dbus.Conn, h Handler) *Server {
 	}
 }
 
-// Export publishes the four notification methods (and an introspection node)
-// on conn at ObjectPath and claims the well-known BusName. It returns
-// ErrNameTaken if the name is already owned, or the underlying error if
-// exporting or the name request fails.
+// Export publishes the four notification methods on conn at ObjectPath and
+// claims the well-known BusName. It returns ErrNameTaken if the name is already
+// owned, or the underlying error if exporting or the name request fails.
+//
+// The org.freedesktop.DBus.Introspectable interface is served automatically by
+// the connection (it reflects the exported methods into an introspection
+// document), so no introspection node is registered here.
 func (s *Server) Export() error {
 	if err := s.exportFn(&notifyExport{s: s}, dbus.ObjectPath(ObjectPath), Interface); err != nil {
 		return err
 	}
-	// Introspection is advisory: publish it best-effort and never fail on it.
-	_ = s.conn.Export(introspect.Introspectable(introspectXML), dbus.ObjectPath(ObjectPath),
-		"org.freedesktop.DBus.Introspectable")
-	reply, err := s.requestNameFn(BusName, dbus.NameFlagDoNotQueue)
+	code, err := s.requestNameFn(BusName, dbus.NameFlagDoNotQueue)
 	if err != nil {
 		return err
 	}
-	if reply != dbus.RequestNameReplyPrimaryOwner {
+	if code != dbus.NameReplyPrimaryOwner {
 		return ErrNameTaken
 	}
 	return nil
@@ -114,8 +113,8 @@ func (s *Server) assign(n *Notification) uint32 {
 	return s.handler.OnNotify(n)
 }
 
-// notifyExport is the receiver godbus dispatches the interface's method calls
-// to. Keeping the wire methods on a dedicated type (rather than on Server
+// notifyExport is the receiver the connection dispatches the interface's method
+// calls to. Keeping the wire methods on a dedicated type (rather than on Server
 // directly) means only the four spec methods are exported over D-Bus.
 type notifyExport struct{ s *Server }
 
@@ -147,40 +146,3 @@ func (x *notifyExport) GetCapabilities() ([]string, *dbus.Error) {
 func (x *notifyExport) GetServerInformation() (string, string, string, string, *dbus.Error) {
 	return ServerName, VendorName, Version, SpecVersion, nil
 }
-
-// introspectXML advertises the interface so peers (and d-feet / gdbus) can
-// discover the four methods and two signals.
-const introspectXML = `<node>
-  <interface name="org.freedesktop.Notifications">
-    <method name="Notify">
-      <arg type="s" name="app_name" direction="in"/>
-      <arg type="u" name="replaces_id" direction="in"/>
-      <arg type="s" name="app_icon" direction="in"/>
-      <arg type="s" name="summary" direction="in"/>
-      <arg type="s" name="body" direction="in"/>
-      <arg type="as" name="actions" direction="in"/>
-      <arg type="a{sv}" name="hints" direction="in"/>
-      <arg type="i" name="expire_timeout" direction="in"/>
-      <arg type="u" name="id" direction="out"/>
-    </method>
-    <method name="CloseNotification">
-      <arg type="u" name="id" direction="in"/>
-    </method>
-    <method name="GetCapabilities">
-      <arg type="as" name="capabilities" direction="out"/>
-    </method>
-    <method name="GetServerInformation">
-      <arg type="s" name="name" direction="out"/>
-      <arg type="s" name="vendor" direction="out"/>
-      <arg type="s" name="version" direction="out"/>
-      <arg type="s" name="spec_version" direction="out"/>
-    </method>
-    <signal name="NotificationClosed">
-      <arg type="u" name="id"/>
-      <arg type="u" name="reason"/>
-    </signal>
-    <signal name="ActionInvoked">
-      <arg type="u" name="id"/>
-      <arg type="s" name="action_key"/>
-    </signal>
-  </interface>` + introspect.IntrospectDataString + `</node>`

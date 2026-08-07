@@ -14,7 +14,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/godbus/dbus/v5"
+	"github.com/go-freedesktop/dbus"
 )
 
 // Errors returned by the image decoders.

@@ -12,7 +12,7 @@ import (
 	"net"
 	"testing"
 
-	"github.com/godbus/dbus/v5"
+	"github.com/go-freedesktop/dbus"
 )
 
 // The server's method handlers are unit-tested as plain Go calls with injected
@@ -59,10 +59,7 @@ func recordEmitter() (func(dbus.ObjectPath, string, ...interface{}) error, *[]em
 func newPipeConn(t *testing.T) *dbus.Conn {
 	t.Helper()
 	a, b := net.Pipe()
-	conn, err := dbus.NewConn(a)
-	if err != nil {
-		t.Fatal(err)
-	}
+	conn := dbus.NewConn(a)
 	t.Cleanup(func() { _ = conn.Close(); _ = b.Close() })
 	return conn
 }
@@ -196,10 +193,11 @@ func TestExportBranches(t *testing.T) {
 	boom := errors.New("boom")
 	okExport := func(interface{}, dbus.ObjectPath, string) error { return nil }
 
-	// Success: exportFn ok, real (local) introspect export, name granted.
+	// Success: exportFn ok, name granted (introspection is served internally
+	// by the connection, so Export registers no introspection node).
 	s := &Server{conn: conn, handler: &recHandler{}, exportFn: okExport,
-		requestNameFn: func(string, dbus.RequestNameFlags) (dbus.RequestNameReply, error) {
-			return dbus.RequestNameReplyPrimaryOwner, nil
+		requestNameFn: func(string, uint32) (uint32, error) {
+			return dbus.NameReplyPrimaryOwner, nil
 		}}
 	if err := s.Export(); err != nil {
 		t.Fatalf("Export success path: %v", err)
@@ -213,7 +211,7 @@ func TestExportBranches(t *testing.T) {
 
 	// request-name failure propagates.
 	s3 := &Server{conn: conn, exportFn: okExport,
-		requestNameFn: func(string, dbus.RequestNameFlags) (dbus.RequestNameReply, error) {
+		requestNameFn: func(string, uint32) (uint32, error) {
 			return 0, boom
 		}}
 	if err := s3.Export(); !errors.Is(err, boom) {
@@ -222,8 +220,8 @@ func TestExportBranches(t *testing.T) {
 
 	// A non-primary-owner reply is ErrNameTaken.
 	s4 := &Server{conn: conn, exportFn: okExport,
-		requestNameFn: func(string, dbus.RequestNameFlags) (dbus.RequestNameReply, error) {
-			return dbus.RequestNameReplyInQueue, nil
+		requestNameFn: func(string, uint32) (uint32, error) {
+			return dbus.NameReplyInQueue, nil
 		}}
 	if err := s4.Export(); !errors.Is(err, ErrNameTaken) {
 		t.Fatalf("expected ErrNameTaken, got %v", err)
