@@ -2,6 +2,8 @@ github.com/adrg/xdg v0.5.3 h1:xRnxJXne7+oWDatRhR1JLnvuccuIeCoBu2rtuLqQB78=
 github.com/adrg/xdg v0.5.3/go.mod h1:nlTsY+NNiCBGCK2tpm09vRqfVzrc2fLmXGpBLF0zlTQ=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
+github.com/go-freedesktop/dbus v0.0.0-20260807132851-d088db983331 h1:oI0InRCr3P6s8oGmwU2FvNHfBf5uh/LvwGK8UDUsWv4=
+github.com/go-freedesktop/dbus v0.0.0-20260807132851-d088db983331/go.mod h1:POfbq95HLV4+H2pbs4GQKk8hLC+wbwgIxmrXbhBxgLw=
 github.com/go-freedesktop/icontheme v0.0.0-20260806213759-7a51b87ca277 h1:wg9oAHBkDb3OiItD9uIkfQbKhVhR+4WViAK3d8tUpF8=
 github.com/go-freedesktop/icontheme v0.0.0-20260806213759-7a51b87ca277/go.mod h1:1pd0HU10jyrUagmXSerxxnP7JI7yNQwYgtHEIjszMIs=
 github.com/go-opentype/bidi v0.2.0 h1:ze8chEUw22c98LZug2GByD9cc3Zuq0qARxrSLGj1ioQ=
@@ -16,8 +18,6 @@ github.com/go-widgets/painter v0.2.0 h1:C7anwlKLYnlTeCK90xKYvy0srxYXqhuvyDFismlf
 github.com/go-widgets/painter v0.2.0/go.mod h1:ccmlkH2UmcXQh6rt9Fu2eDt2RI0B5V0POaGmUKeW0EQ=
 github.com/go-widgets/toolkit v0.119.0 h1:RV6tE8ydDgT0wEoV92HYZDfCZRgfrnD2TVtYFKx9vA0=
 github.com/go-widgets/toolkit v0.119.0/go.mod h1:uBYcJJeBA2hqHiTlKaLsPZ9t/NsBA6DFtpp33i5l5/8=
-github.com/godbus/dbus/v5 v5.2.2 h1:TUR3TgtSVDmjiXOgAAyaZbYmIeP3DPkld3jgKGV8mXQ=
-github.com/godbus/dbus/v5 v5.2.2/go.mod h1:3AAv2+hPq5rdnr5txxxRwiGjPXamgoIHgz9FPBfOp3c=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/stretchr/testify v1.9.0 h1:HtqpIVDClZ4nwg75+f6Lvsy/wHu+3BoSGCbBAcpTsTg=
