@@ -35,6 +35,9 @@ func NewServer(conn *dbus.Conn, h Handler) *Server { return &Server{} }
 // Export reports ErrUnsupported: there is no session bus service to export to.
 func (s *Server) Export() error { return ErrUnsupported }
 
+// ExportReplace reports ErrUnsupported (there is no session bus to claim).
+func (s *Server) ExportReplace() error { return ErrUnsupported }
+
 // EmitClosed reports ErrUnsupported.
 func (s *Server) EmitClosed(id uint32, reason CloseReason) error { return ErrUnsupported }
 

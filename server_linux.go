@@ -7,16 +7,10 @@
 package notifications
 
 import (
-	"errors"
 	"sync"
 
 	"github.com/go-freedesktop/dbus"
 )
-
-// ErrNameTaken is returned by Export when another process already owns the
-// org.freedesktop.Notifications name (a notification daemon is already
-// running).
-var ErrNameTaken = errors.New("notifications: another daemon already owns " + BusName)
 
 // Handler is the application-side callback set a Server drives. OnNotify is
 // invoked for each incoming Notify (the Notification already carries its
@@ -64,20 +58,41 @@ func NewServer(conn *dbus.Conn, h Handler) *Server {
 
 // Export publishes the four notification methods on conn at ObjectPath and
 // claims the well-known BusName. It returns ErrNameTaken if the name is already
-// owned, or the underlying error if exporting or the name request fails.
+// owned by another daemon, or the underlying error if exporting or the name
+// request fails.
+//
+// The name is claimed with DoNotQueue (never wait behind a running daemon) and
+// AllowReplacement, so a later daemon started with ExportReplace (notifyd
+// -replace) can take the name over from this one gracefully.
 //
 // The org.freedesktop.DBus.Introspectable interface is served automatically by
 // the connection (it reflects the exported methods into an introspection
 // document), so no introspection node is registered here.
 func (s *Server) Export() error {
+	return s.export(dbus.NameFlagAllowReplacement | dbus.NameFlagDoNotQueue)
+}
+
+// ExportReplace is Export that additionally sets ReplaceExisting, asking the bus
+// to hand the well-known name over from a currently running daemon (which
+// succeeds only if that daemon claimed the name with AllowReplacement, as this
+// package's Export does). It still returns ErrNameTaken if the incumbent
+// refuses to yield the name.
+func (s *Server) ExportReplace() error {
+	return s.export(dbus.NameFlagReplaceExisting | dbus.NameFlagAllowReplacement | dbus.NameFlagDoNotQueue)
+}
+
+// export publishes the method object and claims BusName with the given
+// RequestName flags. Primary-owner and already-owner replies are success; any
+// other reply means another daemon holds the name (ErrNameTaken).
+func (s *Server) export(flags uint32) error {
 	if err := s.exportFn(&notifyExport{s: s}, dbus.ObjectPath(ObjectPath), Interface); err != nil {
 		return err
 	}
-	code, err := s.requestNameFn(BusName, dbus.NameFlagDoNotQueue)
+	code, err := s.requestNameFn(BusName, flags)
 	if err != nil {
 		return err
 	}
-	if code != dbus.NameReplyPrimaryOwner {
+	if code != dbus.NameReplyPrimaryOwner && code != dbus.NameReplyAlreadyOwner {
 		return ErrNameTaken
 	}
 	return nil

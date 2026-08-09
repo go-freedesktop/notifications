@@ -25,6 +25,9 @@ func TestStubServerUnsupported(t *testing.T) {
 	if err := s.Export(); !errors.Is(err, ErrUnsupported) {
 		t.Errorf("Export() = %v, want ErrUnsupported", err)
 	}
+	if err := s.ExportReplace(); !errors.Is(err, ErrUnsupported) {
+		t.Errorf("ExportReplace() = %v, want ErrUnsupported", err)
+	}
 	if err := s.EmitClosed(1, ReasonExpired); !errors.Is(err, ErrUnsupported) {
 		t.Errorf("EmitClosed() = %v, want ErrUnsupported", err)
 	}

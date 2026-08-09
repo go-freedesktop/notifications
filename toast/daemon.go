@@ -11,6 +11,12 @@ import (
 	"github.com/go-widgets/toolkit"
 )
 
+// DefaultCap is the default upper bound on the number of live notifications a
+// Daemon keeps at once. When a new notification would exceed the cap the oldest
+// live one is retired (closed, reason expired), so a flood of notifications can
+// never grow the in-memory store without bound.
+const DefaultCap = 100
+
 // Emitter is the subset of the notification server the Daemon drives: emitting
 // the two spec signals. github.com/go-freedesktop/notifications.Server
 // satisfies it on Linux (and its non-Linux stub satisfies it too), so a Daemon
@@ -43,6 +49,11 @@ type Daemon struct {
 	Host   toolkit.Rect
 	Corner toolkit.Corner
 
+	// Cap bounds the number of live notifications kept at once (default
+	// DefaultCap). A value <= 0 means unbounded. When a new notification
+	// would exceed Cap the oldest live one is retired.
+	Cap int
+
 	emit  Emitter
 	theme *toolkit.Theme
 	icons IconLookup
@@ -57,6 +68,7 @@ func NewDaemon(emit Emitter, theme *toolkit.Theme, icons IconLookup) *Daemon {
 	return &Daemon{
 		Host:   toolkit.Rect{X: 0, Y: 0, W: 400, H: 600},
 		Corner: toolkit.BottomRight,
+		Cap:    DefaultCap,
 		emit:   emit,
 		theme:  theme,
 		icons:  icons,
@@ -75,8 +87,9 @@ func (d *Daemon) SetEmitter(e Emitter) {
 }
 
 // OnNotify renders n into a Toast and adds it to the stack (replacing an
-// existing entry with the same id), then returns n.ID. It implements
-// notifications.Handler.
+// existing entry with the same id), then returns n.ID. If adding it would push
+// the live count past Cap, the oldest notifications are retired to make room
+// (each closed with reason expired). It implements notifications.Handler.
 func (d *Daemon) OnNotify(n *notifications.Notification) uint32 {
 	t := ToToast(n, d.theme, d.icons, d.onAction)
 	d.mu.Lock()
@@ -85,8 +98,16 @@ func (d *Daemon) OnNotify(n *notifications.Notification) uint32 {
 	} else {
 		d.entries = append(d.entries, &entry{n: n, t: t})
 	}
+	var evicted []uint32
+	for d.Cap > 0 && len(d.entries) > d.Cap {
+		evicted = append(evicted, d.entries[0].n.ID)
+		d.entries = d.entries[1:]
+	}
 	d.restack()
 	d.mu.Unlock()
+	for _, id := range evicted {
+		_ = d.emit.EmitClosed(id, notifications.ReasonExpired)
+	}
 	return n.ID
 }
 

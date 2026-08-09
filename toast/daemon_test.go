@@ -75,6 +75,47 @@ func TestDaemonOnNotifyAddReplaceAndOrder(t *testing.T) {
 	}
 }
 
+func TestDaemonCapEvictsOldest(t *testing.T) {
+	d, f := newTestDaemon()
+	d.Cap = 2
+	d.OnNotify(note(1, 5000))
+	d.OnNotify(note(2, 5000))
+	// Third notification overflows Cap=2: the oldest (id 1) is retired.
+	if got := d.OnNotify(note(3, 5000)); got != 3 {
+		t.Fatalf("OnNotify returned %d, want 3", got)
+	}
+	ts := d.Toasts()
+	if len(ts) != 2 {
+		t.Fatalf("stack size = %d, want 2 (capped)", len(ts))
+	}
+	if len(f.closed) != 1 || f.closed[0] != (closedSig{1, notifications.ReasonExpired}) {
+		t.Fatalf("eviction close = %v, want [{1 expired}]", f.closed)
+	}
+
+	// Replacing a live id must not evict (length does not grow).
+	d.OnNotify(note(2, 5000))
+	if len(d.Toasts()) != 2 || len(f.closed) != 1 {
+		t.Fatalf("replace grew/evicted: stack=%d closed=%v", len(d.Toasts()), f.closed)
+	}
+
+	// Cap <= 0 disables the bound: many notifications all stay live.
+	du, _ := newTestDaemon()
+	du.Cap = 0
+	for i := uint32(1); i <= DefaultCap+5; i++ {
+		du.OnNotify(note(i, 5000))
+	}
+	if len(du.Toasts()) != int(DefaultCap+5) {
+		t.Fatalf("unbounded stack = %d, want %d", len(du.Toasts()), DefaultCap+5)
+	}
+}
+
+func TestDaemonDefaultCap(t *testing.T) {
+	d := NewDaemon(nil, toolkit.DefaultLight(), nil)
+	if d.Cap != DefaultCap {
+		t.Fatalf("default Cap = %d, want %d", d.Cap, DefaultCap)
+	}
+}
+
 func TestDaemonTickExpiryEmitsClosed(t *testing.T) {
 	d, f := newTestDaemon()
 	d.OnNotify(note(1, 50))   // Life 1 -> expires next tick

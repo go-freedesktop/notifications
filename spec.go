@@ -20,6 +20,15 @@
 // Specification: https://specifications.freedesktop.org/notification-spec/latest/
 package notifications
 
+import "errors"
+
+// ErrNameTaken is returned by a Server's Export/ExportReplace when another
+// process already owns the org.freedesktop.Notifications name (a notification
+// daemon is already running and, for ExportReplace, refused to yield it). It is
+// defined platform-neutrally so portable callers can classify the outcome on
+// every GOOS.
+var ErrNameTaken = errors.New("notifications: another daemon already owns " + BusName)
+
 // Well-known D-Bus name, object path and interface of the notification
 // service, as mandated by the specification.
 const (
