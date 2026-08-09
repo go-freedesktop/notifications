@@ -56,7 +56,7 @@ const (
 const (
 	ServerName  = "go-widgets-notifyd"
 	VendorName  = "go-freedesktop"
-	Version     = "0.2.0"
+	Version     = "0.3.0"
 	SpecVersion = "1.2"
 )
 
