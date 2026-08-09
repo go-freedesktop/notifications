@@ -1,0 +1,16 @@
+# D-Bus service activation file for the go-freedesktop notification daemon.
+#
+# Install to a session-bus services directory, e.g.
+#   ~/.local/share/dbus-1/services/org.freedesktop.Notifications.service
+#   /usr/share/dbus-1/services/org.freedesktop.Notifications.service
+#
+# With this file in place the session bus starts notifyd on demand the first
+# time an application calls org.freedesktop.Notifications (bus activation), and
+# -- via SystemdService -- hands the lifecycle to the systemd user unit so
+# journald captures its logs and it restarts on failure.
+#
+# Adjust Exec to the absolute path notifyd is installed at on your system.
+[D-BUS Service]
+Name=org.freedesktop.Notifications
+Exec=/usr/bin/notifyd
+SystemdService=notifyd.service

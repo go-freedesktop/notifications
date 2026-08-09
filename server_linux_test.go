@@ -226,4 +226,41 @@ func TestExportBranches(t *testing.T) {
 	if err := s4.Export(); !errors.Is(err, ErrNameTaken) {
 		t.Fatalf("expected ErrNameTaken, got %v", err)
 	}
+
+	// An already-owner reply (re-claiming a name we already hold) is success.
+	s5 := &Server{conn: conn, exportFn: okExport,
+		requestNameFn: func(string, uint32) (uint32, error) {
+			return dbus.NameReplyAlreadyOwner, nil
+		}}
+	if err := s5.Export(); err != nil {
+		t.Fatalf("already-owner should be success, got %v", err)
+	}
+}
+
+// TestExportFlags verifies Export and ExportReplace pass the expected
+// RequestName flags: Export permits later replacement (AllowReplacement) and
+// never queues (DoNotQueue); ExportReplace additionally sets ReplaceExisting.
+func TestExportFlags(t *testing.T) {
+	okExport := func(interface{}, dbus.ObjectPath, string) error { return nil }
+
+	var gotFlags uint32
+	capture := func(_ string, flags uint32) (uint32, error) {
+		gotFlags = flags
+		return dbus.NameReplyPrimaryOwner, nil
+	}
+
+	s := &Server{exportFn: okExport, requestNameFn: capture}
+	if err := s.Export(); err != nil {
+		t.Fatalf("Export: %v", err)
+	}
+	if want := dbus.NameFlagAllowReplacement | dbus.NameFlagDoNotQueue; gotFlags != want {
+		t.Fatalf("Export flags = %#x, want %#x", gotFlags, want)
+	}
+
+	if err := s.ExportReplace(); err != nil {
+		t.Fatalf("ExportReplace: %v", err)
+	}
+	if want := dbus.NameFlagReplaceExisting | dbus.NameFlagAllowReplacement | dbus.NameFlagDoNotQueue; gotFlags != want {
+		t.Fatalf("ExportReplace flags = %#x, want %#x", gotFlags, want)
+	}
 }

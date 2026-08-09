@@ -1,0 +1,30 @@
+# systemd user unit for the go-freedesktop notification daemon.
+#
+# Install to a systemd user unit directory, e.g.
+#   ~/.config/systemd/user/notifyd.service
+#   /usr/lib/systemd/user/notifyd.service
+#
+# On-demand (recommended): pair this with the D-Bus activation file
+# (org.freedesktop.Notifications.service). Type=dbus + BusName let systemd
+# consider the service started once notifyd owns the well-known name, and the
+# bus starts it lazily on the first Notify call.
+#
+# Always-on instead: `systemctl --user enable --now notifyd.service`.
+[Unit]
+Description=go-freedesktop notification daemon (notifyd)
+Documentation=https://github.com/go-freedesktop/notifications
+PartOf=graphical-session.target
+After=graphical-session.target
+
+[Service]
+Type=dbus
+BusName=org.freedesktop.Notifications
+# Absolute path required by systemd; adjust to your install prefix.
+ExecStart=/usr/bin/notifyd
+# Take the name over from any daemon already running when this unit starts.
+# ExecStart=/usr/bin/notifyd -replace
+Restart=on-failure
+RestartSec=1
+
+[Install]
+WantedBy=graphical-session.target
