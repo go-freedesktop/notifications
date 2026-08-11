@@ -7,7 +7,7 @@ package notifications
 import (
 	"testing"
 
-	"github.com/go-freedesktop/dbus"
+	"github.com/godbus/dbus/v5"
 )
 
 func TestDecodeHintsNilMap(t *testing.T) {

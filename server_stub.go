@@ -9,7 +9,7 @@ package notifications
 import (
 	"errors"
 
-	"github.com/go-freedesktop/dbus"
+	"github.com/godbus/dbus/v5"
 )
 
 // ErrUnsupported is returned by every Server operation on a non-Linux build.

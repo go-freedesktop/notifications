@@ -12,7 +12,7 @@
 // notification.go, hints.go and image.go) that models a Notification and
 // decodes the wire-level hint dictionary and image payloads, a Linux D-Bus
 // server (server_linux.go) that exports the four spec methods and emits the
-// two spec signals over the owned pure-Go github.com/go-freedesktop/dbus, and
+// two spec signals over the pure-Go (CGO-free) github.com/godbus/dbus/v5, and
 // a pure bridge
 // (./toast) that turns a decoded Notification into a github.com/go-widgets
 // Toast widget so a go-widgets desktop can act as the notification daemon.

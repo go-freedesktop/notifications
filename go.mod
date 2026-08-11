@@ -3,10 +3,10 @@ module github.com/go-freedesktop/notifications
 go 1.26.4
 
 require (
-	github.com/go-freedesktop/dbus v0.1.1
 	github.com/go-freedesktop/icontheme v0.0.0-20260806213759-7a51b87ca277
 	github.com/go-widgets/painter v0.2.0
 	github.com/go-widgets/toolkit v0.119.0
+	github.com/godbus/dbus/v5 v5.2.2
 )
 
 require (
