@@ -7,7 +7,7 @@ package notifications
 import (
 	"image"
 
-	"github.com/go-freedesktop/dbus"
+	"github.com/godbus/dbus/v5"
 )
 
 // Urgency is the freedesktop "urgency" hint: a byte ranking how much the

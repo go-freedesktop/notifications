@@ -9,7 +9,8 @@ package notifications
 import (
 	"sync"
 
-	"github.com/go-freedesktop/dbus"
+	"github.com/godbus/dbus/v5"
+	"github.com/godbus/dbus/v5/introspect"
 )
 
 // Handler is the application-side callback set a Server drives. OnNotify is
@@ -40,7 +41,7 @@ type Server struct {
 	nextID uint32
 
 	exportFn      func(v interface{}, path dbus.ObjectPath, iface string) error
-	requestNameFn func(name string, flags uint32) (uint32, error)
+	requestNameFn func(name string, flags dbus.RequestNameFlags) (dbus.RequestNameReply, error)
 	emitFn        func(path dbus.ObjectPath, name string, values ...interface{}) error
 }
 
@@ -65,9 +66,11 @@ func NewServer(conn *dbus.Conn, h Handler) *Server {
 // AllowReplacement, so a later daemon started with ExportReplace (notifyd
 // -replace) can take the name over from this one gracefully.
 //
-// The org.freedesktop.DBus.Introspectable interface is served automatically by
-// the connection (it reflects the exported methods into an introspection
-// document), so no introspection node is registered here.
+// An org.freedesktop.DBus.Introspectable node describing the four methods and
+// two signals is registered alongside the method object (see
+// exportIntrospection): unlike the previously-used owned bus, godbus does not
+// synthesise introspection from the exported methods, so it is published
+// explicitly.
 func (s *Server) Export() error {
 	return s.export(dbus.NameFlagAllowReplacement | dbus.NameFlagDoNotQueue)
 }
@@ -84,18 +87,50 @@ func (s *Server) ExportReplace() error {
 // export publishes the method object and claims BusName with the given
 // RequestName flags. Primary-owner and already-owner replies are success; any
 // other reply means another daemon holds the name (ErrNameTaken).
-func (s *Server) export(flags uint32) error {
+func (s *Server) export(flags dbus.RequestNameFlags) error {
 	if err := s.exportFn(&notifyExport{s: s}, dbus.ObjectPath(ObjectPath), Interface); err != nil {
 		return err
 	}
+	s.exportIntrospection()
 	code, err := s.requestNameFn(BusName, flags)
 	if err != nil {
 		return err
 	}
-	if code != dbus.NameReplyPrimaryOwner && code != dbus.NameReplyAlreadyOwner {
+	if code != dbus.RequestNameReplyPrimaryOwner && code != dbus.RequestNameReplyAlreadyOwner {
 		return ErrNameTaken
 	}
 	return nil
+}
+
+// exportIntrospection publishes the org.freedesktop.DBus.Introspectable node
+// for the service so introspecting clients (d-feet, gdbus introspect, ...) can
+// discover the interface. godbus does not synthesise introspection from an
+// exported object, so the node is built explicitly from the method object and
+// the two signal signatures. It is best-effort and a no-op when no real
+// connection is present -- the seam-injected unit tests construct a Server with
+// a nil conn and drive export() through the fakes.
+func (s *Server) exportIntrospection() {
+	if s.conn == nil {
+		return
+	}
+	node := &introspect.Node{
+		Name: ObjectPath,
+		Interfaces: []introspect.Interface{
+			introspect.IntrospectData,
+			{
+				Name:    Interface,
+				Methods: introspect.Methods(&notifyExport{s: s}),
+				Signals: []introspect.Signal{
+					{Name: SignalNotificationClosed, Args: []introspect.Arg{
+						{Name: "id", Type: "u"}, {Name: "reason", Type: "u"}}},
+					{Name: SignalActionInvoked, Args: []introspect.Arg{
+						{Name: "id", Type: "u"}, {Name: "action_key", Type: "s"}}},
+				},
+			},
+		},
+	}
+	_ = s.conn.Export(introspect.NewIntrospectable(node), dbus.ObjectPath(ObjectPath),
+		"org.freedesktop.DBus.Introspectable")
 }
 
 // EmitClosed emits the NotificationClosed signal for id with the given reason.

@@ -7,7 +7,7 @@
 // This end-to-end test drives the notification service against a REAL
 // dbus-daemon and is therefore gated: it runs only when
 // NOTIFICATIONS_INTEGRATION=1 (set it under `dbus-run-session`). It proves the
-// migration onto the owned pure-Go github.com/go-freedesktop/dbus works on the
+// migration onto the pure-Go github.com/godbus/dbus/v5 works on the
 // live session bus exactly as libnotify / notify-send would exercise it:
 // export the service and claim the name, then from a second connection call
 // GetServerInformation, GetCapabilities, Notify and CloseNotification and
@@ -20,8 +20,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/go-freedesktop/dbus"
 	"github.com/go-freedesktop/notifications"
+	"github.com/godbus/dbus/v5"
 )
 
 // intHandler records what the server forwards and hands each notification the
@@ -70,8 +70,8 @@ func TestIntegrationRealBus(t *testing.T) {
 	obj := cli.Object(notifications.BusName, dbus.ObjectPath(notifications.ObjectPath))
 
 	// Subscribe to the two spec signals before triggering anything.
-	if err := cli.AddMatch("type='signal',interface='" + notifications.Interface + "'"); err != nil {
-		t.Fatalf("AddMatch: %v", err)
+	if err := cli.AddMatchSignal(dbus.WithMatchInterface(notifications.Interface)); err != nil {
+		t.Fatalf("AddMatchSignal: %v", err)
 	}
 	sigCh := make(chan *dbus.Signal, 8)
 	cli.Signal(sigCh)

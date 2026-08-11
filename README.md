@@ -26,8 +26,8 @@ waits on.
   rowstride), and the spec constants + truthful capability list.
 - **Server** (`server_linux.go`) — exports the four methods
   (`Notify`, `CloseNotification`, `GetCapabilities`, `GetServerInformation`)
-  and emits the two signals over the owned pure-Go
-  [`github.com/go-freedesktop/dbus`](https://github.com/go-freedesktop/dbus),
+  and emits the two signals over the pure-Go
+  [`github.com/godbus/dbus/v5`](https://github.com/godbus/dbus),
   forwarding decoded requests to a `Handler`. `Export` claims the well-known
   name (never queueing, and permitting later replacement); `ExportReplace`
   additionally asks the bus to hand the name over from a running daemon. A
@@ -136,8 +136,8 @@ always-on daemon instead run `systemctl --user enable --now notifyd.service`.
 
 ## Transport
 
-Built on the owned pure-Go
-[`github.com/go-freedesktop/dbus`](https://github.com/go-freedesktop/dbus)
+Built on the pure-Go
+[`github.com/godbus/dbus/v5`](https://github.com/godbus/dbus)
 (`CGO_ENABLED=0` on every target). No D-Bus wire codec is reimplemented and
 nothing shells out to a CLI. The server test suite exercises real
 `susssasa{sv}i` marshalling over an in-memory `net.Pipe` peer-to-peer

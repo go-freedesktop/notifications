@@ -38,12 +38,12 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/go-freedesktop/dbus"
 	"github.com/go-freedesktop/icontheme"
 	"github.com/go-freedesktop/notifications"
 	ntoast "github.com/go-freedesktop/notifications/toast"
 	"github.com/go-widgets/painter"
 	"github.com/go-widgets/toolkit"
+	"github.com/godbus/dbus/v5"
 )
 
 // iconSize is the nominal pixel size requested from the icon theme.

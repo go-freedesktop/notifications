@@ -12,7 +12,7 @@ import (
 	"net"
 	"testing"
 
-	"github.com/go-freedesktop/dbus"
+	"github.com/godbus/dbus/v5"
 )
 
 // The server's method handlers are unit-tested as plain Go calls with injected
@@ -59,7 +59,10 @@ func recordEmitter() (func(dbus.ObjectPath, string, ...interface{}) error, *[]em
 func newPipeConn(t *testing.T) *dbus.Conn {
 	t.Helper()
 	a, b := net.Pipe()
-	conn := dbus.NewConn(a)
+	conn, err := dbus.NewConn(a)
+	if err != nil {
+		t.Fatalf("NewConn: %v", err)
+	}
 	t.Cleanup(func() { _ = conn.Close(); _ = b.Close() })
 	return conn
 }
@@ -193,11 +196,11 @@ func TestExportBranches(t *testing.T) {
 	boom := errors.New("boom")
 	okExport := func(interface{}, dbus.ObjectPath, string) error { return nil }
 
-	// Success: exportFn ok, name granted (introspection is served internally
-	// by the connection, so Export registers no introspection node).
+	// Success: exportFn ok, name granted. Export additionally registers the
+	// introspectable node on conn (a pure in-memory registration on the pipe).
 	s := &Server{conn: conn, handler: &recHandler{}, exportFn: okExport,
-		requestNameFn: func(string, uint32) (uint32, error) {
-			return dbus.NameReplyPrimaryOwner, nil
+		requestNameFn: func(string, dbus.RequestNameFlags) (dbus.RequestNameReply, error) {
+			return dbus.RequestNameReplyPrimaryOwner, nil
 		}}
 	if err := s.Export(); err != nil {
 		t.Fatalf("Export success path: %v", err)
@@ -211,7 +214,7 @@ func TestExportBranches(t *testing.T) {
 
 	// request-name failure propagates.
 	s3 := &Server{conn: conn, exportFn: okExport,
-		requestNameFn: func(string, uint32) (uint32, error) {
+		requestNameFn: func(string, dbus.RequestNameFlags) (dbus.RequestNameReply, error) {
 			return 0, boom
 		}}
 	if err := s3.Export(); !errors.Is(err, boom) {
@@ -220,8 +223,8 @@ func TestExportBranches(t *testing.T) {
 
 	// A non-primary-owner reply is ErrNameTaken.
 	s4 := &Server{conn: conn, exportFn: okExport,
-		requestNameFn: func(string, uint32) (uint32, error) {
-			return dbus.NameReplyInQueue, nil
+		requestNameFn: func(string, dbus.RequestNameFlags) (dbus.RequestNameReply, error) {
+			return dbus.RequestNameReplyInQueue, nil
 		}}
 	if err := s4.Export(); !errors.Is(err, ErrNameTaken) {
 		t.Fatalf("expected ErrNameTaken, got %v", err)
@@ -229,8 +232,8 @@ func TestExportBranches(t *testing.T) {
 
 	// An already-owner reply (re-claiming a name we already hold) is success.
 	s5 := &Server{conn: conn, exportFn: okExport,
-		requestNameFn: func(string, uint32) (uint32, error) {
-			return dbus.NameReplyAlreadyOwner, nil
+		requestNameFn: func(string, dbus.RequestNameFlags) (dbus.RequestNameReply, error) {
+			return dbus.RequestNameReplyAlreadyOwner, nil
 		}}
 	if err := s5.Export(); err != nil {
 		t.Fatalf("already-owner should be success, got %v", err)
@@ -243,10 +246,10 @@ func TestExportBranches(t *testing.T) {
 func TestExportFlags(t *testing.T) {
 	okExport := func(interface{}, dbus.ObjectPath, string) error { return nil }
 
-	var gotFlags uint32
-	capture := func(_ string, flags uint32) (uint32, error) {
+	var gotFlags dbus.RequestNameFlags
+	capture := func(_ string, flags dbus.RequestNameFlags) (dbus.RequestNameReply, error) {
 		gotFlags = flags
-		return dbus.NameReplyPrimaryOwner, nil
+		return dbus.RequestNameReplyPrimaryOwner, nil
 	}
 
 	s := &Server{exportFn: okExport, requestNameFn: capture}

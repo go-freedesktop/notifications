@@ -4,7 +4,7 @@
 
 package notifications
 
-import "github.com/go-freedesktop/dbus"
+import "github.com/godbus/dbus/v5"
 
 // imageDataKeys are the hint keys that may carry an inline image, most-recent
 // spec version first. The specification renamed the key across versions:
