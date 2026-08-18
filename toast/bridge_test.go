@@ -54,11 +54,11 @@ func TestToToastLinesAndMarkup(t *testing.T) {
 	if !reflect.DeepEqual(tt.Lines, want) {
 		t.Fatalf("Lines = %q, want %q", tt.Lines, want)
 	}
-	if !tt.Visible {
+	if !tt.Visible().Get() {
 		t.Error("toast should be visible")
 	}
-	if tt.Life != 20 {
-		t.Errorf("Life = %d, want 20", tt.Life)
+	if tt.Life().Get() != 20 {
+		t.Errorf("Life = %d, want 20", tt.Life().Get())
 	}
 }
 
@@ -120,7 +120,7 @@ func TestToToastClickRoutesActionInvoked(t *testing.T) {
 	}
 
 	// A click entirely outside the pill emits nothing more.
-	tt.Visible = true
+	tt.Visible().Set(true)
 	tt.OnEvent(toolkit.Event{Kind: toolkit.EventClick, X: -100, Y: -100})
 	if calls != 1 {
 		t.Fatalf("out-of-bounds click emitted: calls=%d", calls)
@@ -135,7 +135,7 @@ func TestToToastNilEmitterInert(t *testing.T) {
 	tt.AnchorIn(toolkit.Rect{X: 0, Y: 0, W: 300, H: 200}, toolkit.TopRight, 0)
 	r := tt.ButtonRects()[0]
 	tt.OnEvent(toolkit.Event{Kind: toolkit.EventClick, X: r.X + 1, Y: r.Y + 1})
-	if tt.Visible {
+	if tt.Visible().Get() {
 		t.Error("clicking an action should dismiss the toast even with a nil emitter")
 	}
 }

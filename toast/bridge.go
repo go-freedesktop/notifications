@@ -86,11 +86,11 @@ func KindFor(n *notifications.Notification) toolkit.ToastKind {
 // symmetry with the toolkit draw path and future themed tinting.
 func ToToast(n *notifications.Notification, theme *toolkit.Theme, icons IconLookup, onAction ActionFunc) *toolkit.Toast {
 	t := &toolkit.Toast{
-		Kind:    KindFor(n),
-		Life:    LifeFor(n),
-		Visible: true,
-		Lines:   linesFor(n),
+		Kind:  KindFor(n),
+		Lines: linesFor(n),
 	}
+	t.Life().Set(LifeFor(n))
+	t.Visible().Set(true)
 	for _, a := range n.Actions {
 		if a.IsDefault() {
 			continue
