@@ -131,7 +131,7 @@ func (d *Daemon) Tick() {
 	var expired []uint32
 	for _, e := range d.entries {
 		e.t.Tick()
-		if !e.t.Visible {
+		if !e.t.Visible().Get() {
 			expired = append(expired, e.n.ID)
 		}
 	}
