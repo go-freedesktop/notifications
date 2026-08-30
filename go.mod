@@ -3,27 +3,33 @@ module github.com/go-freedesktop/notifications
 go 1.26.4
 
 require (
-	github.com/go-freedesktop/icontheme v0.0.0-20260806213759-7a51b87ca277
-	github.com/go-widgets/painter v0.11.0
-	github.com/go-widgets/toolkit v0.289.0
+	github.com/go-freedesktop/icontheme v0.1.1
+	github.com/go-widgets/painter v0.12.0
+	github.com/go-widgets/toolkit v0.293.0
 	github.com/godbus/dbus/v5 v5.2.2
 )
 
 require (
 	github.com/adrg/xdg v0.5.3 // indirect
+	github.com/ajroetker/go-highway v0.0.4 // indirect
+	github.com/ajroetker/go-jpeg2000 v0.0.2 // indirect
 	github.com/andybalholm/brotli v1.2.2 // indirect
 	github.com/coder/websocket v1.8.15 // indirect
-	github.com/go-crdt/collab v0.25.0 // indirect
-	github.com/go-crdt/crdt v0.31.0 // indirect
-	github.com/go-gfx/gfx v0.11.0 // indirect
+	github.com/go-crdt/collab v0.33.0 // indirect
+	github.com/go-crdt/crdt v0.35.0 // indirect
+	github.com/go-gfx/gfx v0.18.0 // indirect
 	github.com/go-icons/iconoir v0.2.0 // indirect
-	github.com/go-images/images v0.0.0-20260811115337-bc5d586f8e38 // indirect
+	github.com/go-images/images v0.0.0-20260815210351-4a50ef5ab734 // indirect
 	github.com/go-opentype/fonts v0.6.0 // indirect
 	github.com/go-opentype/opentype v0.5.0 // indirect
 	github.com/go-opentype/shape v0.5.0 // indirect
 	github.com/go-richdoc/richdoc v0.2.0 // indirect
 	github.com/go-typeset/bidi v0.3.0 // indirect
 	github.com/go-widgets/mvvm v0.8.0 // indirect
+	github.com/sergeymakinen/go-bmp v1.0.0 // indirect
+	github.com/sergeymakinen/go-ico v1.0.0 // indirect
+	github.com/tannevaled/gobig2 v0.1.0 // indirect
+	golang.org/x/image v0.45.0 // indirect
 	golang.org/x/net v0.49.0 // indirect
 	golang.org/x/sys v0.47.0 // indirect
 	golang.org/x/text v0.41.0 // indirect
