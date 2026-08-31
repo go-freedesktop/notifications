@@ -5,7 +5,7 @@ go 1.26.4
 require (
 	github.com/go-freedesktop/icontheme v0.1.1
 	github.com/go-widgets/painter v0.12.0
-	github.com/go-widgets/toolkit v0.293.0
+	github.com/go-widgets/toolkit v0.299.0
 	github.com/godbus/dbus/v5 v5.2.2
 )
 
@@ -17,7 +17,7 @@ require (
 	github.com/coder/websocket v1.8.15 // indirect
 	github.com/go-crdt/collab v0.33.0 // indirect
 	github.com/go-crdt/crdt v0.35.0 // indirect
-	github.com/go-gfx/gfx v0.18.0 // indirect
+	github.com/go-gfx/gfx v0.19.0 // indirect
 	github.com/go-icons/iconoir v0.2.0 // indirect
 	github.com/go-images/images v0.0.0-20260815210351-4a50ef5ab734 // indirect
 	github.com/go-opentype/fonts v0.6.0 // indirect
