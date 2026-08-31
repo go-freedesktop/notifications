@@ -28,6 +28,8 @@ github.com/go-gfx/gfx v0.11.0 h1:IwdTO1i7veITSvEFBSjYAqiwzNm7CryDlkQgTt/NsKI=
 github.com/go-gfx/gfx v0.11.0/go.mod h1:bFt/MWyYWRU3Ic9IaB8XOC9KLMMHRRmahMk4FaIGK7g=
 github.com/go-gfx/gfx v0.18.0 h1:wWpOHvJ/FEthx7RHUIt3ZKn/xDZ+Eb7KncZCJU/P/L8=
 github.com/go-gfx/gfx v0.18.0/go.mod h1:VAK6hgCgkhT3j3ek2K7G8zDfkCPD3RCF45UbcRlCV8Q=
+github.com/go-gfx/gfx v0.19.0 h1:nA2Eg8Aq2kytR5Hrm/eQ6618w4vT0+Ao8BMZiuYh84c=
+github.com/go-gfx/gfx v0.19.0/go.mod h1:VAK6hgCgkhT3j3ek2K7G8zDfkCPD3RCF45UbcRlCV8Q=
 github.com/go-icons/iconoir v0.2.0 h1:I5AnDEIPgYfawTmwzemDRJjlYCUbFHuS8GJXrjADhXc=
 github.com/go-icons/iconoir v0.2.0/go.mod h1:Td/M2vy4xdVv4aOudAskV0nXR9Wv0MlhWvyRIzPBz5U=
 github.com/go-images/images v0.0.0-20260811115337-bc5d586f8e38 h1:p+DjIujiwUvBiyD0oS9SUatf3pMKo0GpcA4p/Kyv7d8=
@@ -58,6 +60,8 @@ github.com/go-widgets/toolkit v0.289.0 h1:iVbye2D7YMAkUOcJOXYNZKXqyeOmnxtRhdzEBl
 github.com/go-widgets/toolkit v0.289.0/go.mod h1:IaRQFcV6FjxwzGXpHd3dpEoWZ+82f7dMPwtEZSH4nIg=
 github.com/go-widgets/toolkit v0.293.0 h1:V27E7D6CrMRSnvSjFuQyCHvuClviri4i030TQ08CDdw=
 github.com/go-widgets/toolkit v0.293.0/go.mod h1:HuSAQoeN3V1CyRqX1tLYuQqHsoLMZIsNqS+TYnowphg=
+github.com/go-widgets/toolkit v0.299.0 h1:lUFOiIWGjhlD+IXHZrY/EF1xNbFCTHVnxoanMMdb/+0=
+github.com/go-widgets/toolkit v0.299.0/go.mod h1:oQuOK+iE7Dc1xG1EXsBeO5Kjdf+091uIZSVu3AVLXwc=
 github.com/godbus/dbus/v5 v5.2.2 h1:TUR3TgtSVDmjiXOgAAyaZbYmIeP3DPkld3jgKGV8mXQ=
 github.com/godbus/dbus/v5 v5.2.2/go.mod h1:3AAv2+hPq5rdnr5txxxRwiGjPXamgoIHgz9FPBfOp3c=
 github.com/golang/protobuf v1.5.4 h1:i7eJL8qZTpSEXOPTxNKhASYpMn+8e5Q6AdndVa1dWek=
