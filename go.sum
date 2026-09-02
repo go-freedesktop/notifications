@@ -20,12 +20,16 @@ github.com/go-crdt/collab v0.33.0 h1:bFswNxL+bXSgLY9JLVF6iOEDADM11HkdeU6uA3S72co
 github.com/go-crdt/collab v0.33.0/go.mod h1:YbO+X4Tq/FOQzsui7vreO9U+ucblThW42ifdlRA4qqs=
 github.com/go-crdt/collab v0.36.1 h1:2NTn1iKFoUHnNSeD2hAyy+8bCnpeUI57W7yQ1CY5bko=
 github.com/go-crdt/collab v0.36.1/go.mod h1:CNtopa+kzRg3jfb2bES9+rEIavVrb52IbDcfVV05+6E=
+github.com/go-crdt/collab v0.37.0 h1:tLtDqao5GODY2pxE/wcEA8U9I/rPdN4LvjEPeE4/QwA=
+github.com/go-crdt/collab v0.37.0/go.mod h1:kxTeZDZ6p8wC9gEkf2iWgFg2870lYliHJyCC6vDlsAs=
 github.com/go-crdt/crdt v0.31.0 h1:CTi+lo0bjsJv3F09CR/AdILQtWEWmzbDQ+S/6HNBOMU=
 github.com/go-crdt/crdt v0.31.0/go.mod h1:vbfvns9B9FUaMi2sPKzMYttKmbxfgO7EK3Yu82SrlYw=
 github.com/go-crdt/crdt v0.35.0 h1:8IGUNQo7+S9MfdTFX2miW2l+DxYClDyg+4qmYAmXpnY=
 github.com/go-crdt/crdt v0.35.0/go.mod h1:vbfvns9B9FUaMi2sPKzMYttKmbxfgO7EK3Yu82SrlYw=
 github.com/go-crdt/crdt v0.37.0 h1:offp5UlAqIt2lQwvWamguRBWp6yZs4uUhVISfqw2+l0=
 github.com/go-crdt/crdt v0.37.0/go.mod h1:vbfvns9B9FUaMi2sPKzMYttKmbxfgO7EK3Yu82SrlYw=
+github.com/go-crdt/crdt v0.39.0 h1:DJimBDQqmdqKVCAiU4k1aCWPgXeZ+id/FbO09DklTBw=
+github.com/go-crdt/crdt v0.39.0/go.mod h1:vbfvns9B9FUaMi2sPKzMYttKmbxfgO7EK3Yu82SrlYw=
 github.com/go-freedesktop/icontheme v0.0.0-20260806213759-7a51b87ca277 h1:wg9oAHBkDb3OiItD9uIkfQbKhVhR+4WViAK3d8tUpF8=
 github.com/go-freedesktop/icontheme v0.0.0-20260806213759-7a51b87ca277/go.mod h1:1pd0HU10jyrUagmXSerxxnP7JI7yNQwYgtHEIjszMIs=
 github.com/go-freedesktop/icontheme v0.1.1 h1:e3bUy7s9T+wJVGE3FRr+mGVF2z6kbN456xIBuFGl/as=
@@ -44,6 +48,8 @@ github.com/go-images/images v0.0.0-20260815210351-4a50ef5ab734 h1:nU+MGeyJzidGvC
 github.com/go-images/images v0.0.0-20260815210351-4a50ef5ab734/go.mod h1:ObuOBKDEidGX0LqLKY/5nqj7JVN/hsCzHMAJd0TNc0k=
 github.com/go-images/images v0.0.0-20260830151046-7e8189dc2288 h1:+ljs5FdeIrwsVzMdH43o72xjzBIc8ZJ/gnW6KK0tRrw=
 github.com/go-images/images v0.0.0-20260830151046-7e8189dc2288/go.mod h1:Rz3bjq22JH21J8ipYRVLsJCB7QAEDjfHnxR7JCOmc54=
+github.com/go-images/images v0.0.0-20260831115433-23d959d868e3 h1:SinmtXWpA4a30ZQ5A9QI9YrsYvytmLGeTRVbXqqEezw=
+github.com/go-images/images v0.0.0-20260831115433-23d959d868e3/go.mod h1:Epqq+oFyfwKIS4zmrr12eZVtCuwXhoxV6E+OBEnNsFs=
 github.com/go-logr/logr v1.4.3 h1:CjnDlHq8ikf6E492q6eKboGOC0T8CDaOvkHCIg8idEI=
 github.com/go-logr/logr v1.4.3/go.mod h1:9T104GzyrTigFIr8wt5mBrctHMim0Nb2HLGrmQ40KvY=
 github.com/go-logr/stdr v1.2.2 h1:hSWxHoqTgW2S2qGc0LTAI563KZ5YKYRhT3MFKZMbjag=
@@ -80,6 +86,8 @@ github.com/go-widgets/toolkit v0.299.0 h1:lUFOiIWGjhlD+IXHZrY/EF1xNbFCTHVnxoanMM
 github.com/go-widgets/toolkit v0.299.0/go.mod h1:oQuOK+iE7Dc1xG1EXsBeO5Kjdf+091uIZSVu3AVLXwc=
 github.com/go-widgets/toolkit v0.300.0 h1:vyQ6oN/XsfUPo/WYzrjD5AIFPEj1X1OVaJd7yihmxJk=
 github.com/go-widgets/toolkit v0.300.0/go.mod h1:5G/reoXwETtl6LJGB56471Sqv6keCIYVkhx/bvFPB+g=
+github.com/go-widgets/toolkit v0.301.0 h1:ymKltlmsMiMIHDObIiljo2umNF+ArbTmLD/Dg/9AYNw=
+github.com/go-widgets/toolkit v0.301.0/go.mod h1:NMj7CghnZKC+L9BRaAcKjykewTChSFuuTuVH+2wDjV4=
 github.com/godbus/dbus/v5 v5.2.2 h1:TUR3TgtSVDmjiXOgAAyaZbYmIeP3DPkld3jgKGV8mXQ=
 github.com/godbus/dbus/v5 v5.2.2/go.mod h1:3AAv2+hPq5rdnr5txxxRwiGjPXamgoIHgz9FPBfOp3c=
 github.com/golang/protobuf v1.5.4 h1:i7eJL8qZTpSEXOPTxNKhASYpMn+8e5Q6AdndVa1dWek=
