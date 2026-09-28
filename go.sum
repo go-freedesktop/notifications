@@ -10,10 +10,10 @@ github.com/coder/websocket v1.8.15 h1:6B2JPeOGlpff2Uz6vOEH1Vzpi0iUz20A+lPVhPHtNU
 github.com/coder/websocket v1.8.15/go.mod h1:NX3SzP+inril6yawo5CQXx8+fk145lPDC6pumgx0mVg=
 github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc h1:U9qPSI2PIWSS1VwoXQT9A3Wy9MM3WgvqSxFWenqJduM=
 github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
-github.com/go-crdt/collab v0.62.0 h1:5N4rp4CHqFvCGUwKpWfD6K0pBH2vT11dyXjHJnY5gxw=
-github.com/go-crdt/collab v0.62.0/go.mod h1:By0a0D53ql9VRU45Tl/uim09NaOuUEIiTflQ4QWo8Pc=
-github.com/go-crdt/crdt v0.49.0 h1:5usO+6ugN8qNfuEDC9m7X5X0Msq097AO8oLgOQZ9bfQ=
-github.com/go-crdt/crdt v0.49.0/go.mod h1:vbfvns9B9FUaMi2sPKzMYttKmbxfgO7EK3Yu82SrlYw=
+github.com/go-crdt/collab v0.70.0 h1:RQ06Ed2QtMLh6lzCkLziRuN3HjghYrkFIgYBqQYkzFQ=
+github.com/go-crdt/collab v0.70.0/go.mod h1:a1C6TAdb45K4B9/cOOzC0FN5vxEFSoGe1IBQQEJduCA=
+github.com/go-crdt/crdt v0.51.0 h1:cux4901wTQ13vSvKTAMem3vjZ+vsm5gDaApKfvGyf9o=
+github.com/go-crdt/crdt v0.51.0/go.mod h1:vbfvns9B9FUaMi2sPKzMYttKmbxfgO7EK3Yu82SrlYw=
 github.com/go-freedesktop/icontheme v0.1.1 h1:e3bUy7s9T+wJVGE3FRr+mGVF2z6kbN456xIBuFGl/as=
 github.com/go-freedesktop/icontheme v0.1.1/go.mod h1:1pd0HU10jyrUagmXSerxxnP7JI7yNQwYgtHEIjszMIs=
 github.com/go-gfx/gfx v0.19.0 h1:nA2Eg8Aq2kytR5Hrm/eQ6618w4vT0+Ao8BMZiuYh84c=
@@ -36,8 +36,8 @@ github.com/go-widgets/mvvm v0.9.0 h1:NwW/hAAsJUGlxmNt0ErQ7fUrud3w5Ys1RWm7hVugdJs
 github.com/go-widgets/mvvm v0.9.0/go.mod h1:1cUYVpDei59Ka7W3pMD1FWksBmBXfPnbPWHzBAJ/ebA=
 github.com/go-widgets/painter v0.13.0 h1:xBPbopFuYfeDVbQKUKviU6HnP2mAhztJ+BpasahlJLU=
 github.com/go-widgets/painter v0.13.0/go.mod h1:IPRLqdUJuJX8sfuHeYLZCzjoLvA0ApbOlyIAVmguJDQ=
-github.com/go-widgets/toolkit v0.320.0 h1:qMUjjWo7e7OC84UVhu69+JM+zyMzzyQQyKFzK/+kZ6o=
-github.com/go-widgets/toolkit v0.320.0/go.mod h1:j0Yq64ck+dyCjI8jRn6eKc5s8RGQMQY/Vsgf4bI+7Dk=
+github.com/go-widgets/toolkit v0.321.0 h1:r8bGXiOqkRxEGQlI7sN1GZE1fhy/joMFMbLGiBOUYiY=
+github.com/go-widgets/toolkit v0.321.0/go.mod h1:tObzU60ZNdRXPKlYGsYg8vofh5Jaoqj+KfsI3PYN6sA=
 github.com/godbus/dbus/v5 v5.2.2 h1:TUR3TgtSVDmjiXOgAAyaZbYmIeP3DPkld3jgKGV8mXQ=
 github.com/godbus/dbus/v5 v5.2.2/go.mod h1:3AAv2+hPq5rdnr5txxxRwiGjPXamgoIHgz9FPBfOp3c=
 github.com/golang/protobuf v1.5.4 h1:i7eJL8qZTpSEXOPTxNKhASYpMn+8e5Q6AdndVa1dWek=
