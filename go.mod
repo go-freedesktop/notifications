@@ -1,6 +1,6 @@
 module github.com/go-freedesktop/notifications
 
-go 1.26.4
+go 1.27.1
 
 require (
 	github.com/go-freedesktop/icontheme v0.1.1
