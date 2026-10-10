@@ -5,7 +5,7 @@ go 1.27.1
 require (
 	github.com/go-freedesktop/icontheme v0.2.0
 	github.com/go-widgets/painter v0.15.0
-	github.com/go-widgets/toolkit v0.326.0
+	github.com/go-widgets/toolkit v0.328.0
 	github.com/godbus/dbus/v5 v5.2.2
 )
 
